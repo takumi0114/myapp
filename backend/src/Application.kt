@@ -8,5 +8,4 @@ fun Application.module() {
     configureCors()
     configureDatabases()     // データベース設定
     configureRouting()       // ルーティング設定
-    // configureH2Console()
 }

@@ -2,12 +2,10 @@ package plugins
 
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
-import routes.todoRoutes
+import routes.habitRoutes
 
 fun Application.configureRouting() {
     routing {
-      route("/api") {
-        todoRoutes()
-      }
+        habitRoutes()     
     }
 }
