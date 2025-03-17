@@ -17,36 +17,23 @@ function App() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentHabits = habits.slice(startIndex, endIndex);
-  // const API_URL = "http://localhost:8080/api/habits";
-
-  // const handleAddHabit = (habitData: Omit<Habit, "id" | "createdAt">) => {
-  //   const newHabit: Habit = {
-  //     id: crypto.randomUUID(),
-  //     createdAt: new Date(),
-  //     ...habitData,
-  //   };
-  //   setHabits((prev) => [...prev, newHabit]);
-  // };
-
-  // const handleEditHabit = (habitData: Omit<Habit, "id" | "createdAt">) => {
-  //   if (!editingHabit) return;
-  //   setHabits((prev) =>
-  //     prev.map((habit) =>
-  //       habit.id === editingHabit.id ? { ...habit, ...habitData } : habit
-  //     )
-  //   );
-  // };
-
-  // const handleDeleteHabit = (id: string) => {
-  //   setHabits((prev) => prev.filter((habit) => habit.id !== id));
-  //   // Adjust current page if the last item on the page is deleted
-  //   const totalPages = Math.ceil((habits.length - 1) / itemsPerPage);
-  //   if (currentPage > totalPages && totalPages > 0) {
-  //     setCurrentPage(totalPages);
-  //   }
-  // };
-
   const API_URL = "http://localhost:8080/api/habits";
+
+  useEffect(() => {
+    fetchHabits();
+  }, []);
+
+  const fetchHabits = async () => {
+    try {
+      const response = await axios.get<Habit[]>(API_URL);
+
+      setHabits(response.data);
+    } catch (error) {
+      console.error("習慣の取得中にエラーが発生しました:", error);
+      alert("習慣の取得中にエラーが発生しました");
+    }
+  };
+
   // 新しい習慣をデータベースに保存する関数
   const handleAddHabit = async (habitData: Omit<Habit, "id" | "createdAt">) => {
     try {
@@ -84,13 +71,12 @@ function App() {
     try {
       // バックエンドAPIの期待する形式に変換
       const habitToUpdate = {
-        name: habitData.title,
+        title: habitData.title,
         description: habitData.description,
       };
 
       // APIリクエストを送信
-      //　この辺は変更する必要があるかも
-      await axios.put(`/api/habits/${editingHabit.id}`, habitToUpdate);
+      await axios.put(`${API_URL}/${editingHabit.id}`, habitToUpdate);
 
       // ローカルの状態を更新
       setHabits((prev) =>
@@ -108,7 +94,7 @@ function App() {
   const handleDeleteHabit = async (id: string) => {
     try {
       // APIリクエストを送信
-      await axios.delete(`/api/habits/${id}`);
+      await axios.delete(`${API_URL}/${id}`);
 
       // ローカルの状態を更新
       setHabits((prev) => prev.filter((habit) => habit.id !== id));

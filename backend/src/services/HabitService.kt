@@ -14,9 +14,9 @@ class HabitService {
     
     // 習慣の一覧を取得
     fun getAllHabits(): List<HabitDTO> = transaction {
-        Habits.selectAll().map { row ->
+        val habit = Habits.selectAll().map { row ->
             val habitId = row[Habits.id].value
-            
+
             HabitDTO(
                 id = habitId.toString(),
                 title = row[Habits.title],
@@ -24,6 +24,7 @@ class HabitService {
                 createdAt = row[Habits.createdAt].format(dateFormatter)
             )
         }
+        println(habit)
     }
     
     // 習慣の詳細を取得

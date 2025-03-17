@@ -48,6 +48,7 @@ fun Route.habitRoutes() {
         // 習慣の更新
         put("/{id}") {
             val id = call.parameters["id"]
+            println("この部分にIDが入りますこの部分にIDが入りますこの部分にIDが入りますこの部分にIDが入りますこの部分にIDが入ります", id)
             if (id == null) {
                 call.respond(HttpStatusCode.BadRequest, "Invalid ID")
                 return@put
