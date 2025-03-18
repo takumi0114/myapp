@@ -6,18 +6,32 @@ interface HabitCardProps {
   habit: Habit;
   onEdit: (habit: Habit) => void;
   onDelete: (id: string) => void;
+  onClick: () => void;
 }
 
-export function HabitCard({ habit, onEdit, onDelete }: HabitCardProps) {
-  const handleDelete = () => {
-    const confirmed = window.confirm("この習慣を削除してもよろしいですか？");
-    if (confirmed) {
+export function HabitCard({
+  habit,
+  onEdit,
+  onDelete,
+  onClick,
+}: HabitCardProps) {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("この習慣を削除してもよろしいですか？")) {
       onDelete(habit.id);
     }
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(habit);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+    >
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-lg font-semibold text-gray-800">{habit.title}</h3>
@@ -27,7 +41,7 @@ export function HabitCard({ habit, onEdit, onDelete }: HabitCardProps) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => onEdit(habit)}
+            onClick={handleEdit}
             className="text-gray-500 hover:text-blue-600 transition-colors"
           >
             <Edit2 size={18} />
