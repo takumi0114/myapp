@@ -14,17 +14,14 @@ class HabitService {
     
     // 習慣の一覧を取得
     fun getAllHabits(): List<HabitDTO> = transaction {
-        val habit = Habits.selectAll().map { row ->
-            val habitId = row[Habits.id].value
-
+        Habits.selectAll().map { row ->
             HabitDTO(
-                id = habitId.toString(),
+                id = row[Habits.id].value.toString(),
                 title = row[Habits.title],
                 description = row[Habits.description],
                 createdAt = row[Habits.createdAt].format(dateFormatter)
             )
         }
-        println(habit)
     }
     
     // 習慣の詳細を取得

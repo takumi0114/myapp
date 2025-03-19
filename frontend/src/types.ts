@@ -5,13 +5,6 @@ export interface Habit {
   createdAt: Date;
 }
 
-// export interface HabitDTO {
-//   id?: number;
-//   title: string;
-//   description?: string;
-//   createdAt?: string;
-// }
-
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;

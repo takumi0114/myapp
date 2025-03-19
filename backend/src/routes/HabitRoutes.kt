@@ -11,7 +11,6 @@ import java.util.UUID
 
 fun Route.habitRoutes() {
     val habitService = HabitService()
-    println("確認したい確認したい確認したい確認したい確認したい確認したい確認したい確認したい確認したい確認したい")
     
     route("/api/habits") {
         // 習慣一覧の取得
@@ -48,7 +47,6 @@ fun Route.habitRoutes() {
         // 習慣の更新
         put("/{id}") {
             val id = call.parameters["id"]
-            println("この部分にIDが入りますこの部分にIDが入りますこの部分にIDが入りますこの部分にIDが入りますこの部分にIDが入ります", id)
             if (id == null) {
                 call.respond(HttpStatusCode.BadRequest, "Invalid ID")
                 return@put
