@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -69,5 +70,62 @@ class HabitService {
         val deletedRows = Habits.deleteWhere { Habits.id eq uuid }
         
         deletedRows > 0
+    }
+
+    // 習慣の達成記録を取得
+    fun getHabitAchievements(habitId: String): List<HabitAchievementDTO> = transaction {
+        val uuid = UUID.fromString(habitId)
+        
+        HabitAchievements
+            .select { HabitAchievements.habitId eq uuid }
+            .map { row ->
+                HabitAchievementDTO(
+                    id = row[HabitAchievements.id].value.toString(),
+                    habitId = habitId,
+                    achievementDate = row[HabitAchievements.achievementDate].toString(),
+                    achieved = row[HabitAchievements.achieved]
+                )
+            }
+    }
+
+    // 習慣の達成状況を更新または作成
+    fun updateHabitAchievement(habitId: String, date: String, achieved: Boolean): HabitAchievementDTO = transaction {
+        val uuid = UUID.fromString(habitId)
+        val localDate = LocalDate.parse(date)
+        
+        // 既存のレコードを探す
+        val existingRecord = HabitAchievements
+            .select { (HabitAchievements.habitId eq uuid) and (HabitAchievements.achievementDate eq localDate) }
+            .singleOrNull()
+        
+        if (existingRecord != null) {
+            // 既存のレコードを更新
+            HabitAchievements.update({ (HabitAchievements.habitId eq uuid) and (HabitAchievements.achievementDate eq localDate) }) {
+                it[HabitAchievements.achieved] = achieved
+            }
+            
+            HabitAchievementDTO(
+                id = existingRecord[HabitAchievements.id].value.toString(),
+                habitId = habitId,
+                achievementDate = date,
+                achieved = achieved
+            )
+        } else {
+            // 新しいレコードを作成
+            val id = UUID.randomUUID()
+            HabitAchievements.insert {
+                it[HabitAchievements.id] = id
+                it[HabitAchievements.habitId] = uuid
+                it[HabitAchievements.achievementDate] = localDate
+                it[HabitAchievements.achieved] = achieved
+            }
+            
+            HabitAchievementDTO(
+                id = id.toString(),
+                habitId = habitId,
+                achievementDate = date,
+                achieved = achieved
+            )
+        }
     }
 }
