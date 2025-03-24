@@ -7,6 +7,7 @@ import axios from "axios";
 import type { Habit } from "../types";
 
 const TARGET_DAYS = 66;
+const API_URL = "http://localhost:8080/api/habits";
 
 export function HabitDetail() {
   const { id } = useParams();
@@ -15,41 +16,43 @@ export function HabitDetail() {
   const [achievements, setAchievements] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const API_URL = "http://localhost:8080/api/habits";
-  const today = new Date().toISOString().split("T")[0];
-  const isAchievedToday = achievements[today];
 
-  // 習慣の詳細を取得
+  // 今日の日付を取得
+  const today = new Date().toISOString().split("T")[0];
+  const isAchievedToday = achievements[today] === true;
+
+  // 習慣の詳細と達成記録を取得
   useEffect(() => {
     const fetchHabitDetails = async () => {
+      if (!id) return;
+
       try {
         setLoading(true);
+
         // 習慣の詳細を取得
         const habitResponse = await axios.get(`${API_URL}/${id}`);
-
         setHabit(habitResponse.data);
 
-        // // 習慣の達成記録を取得
-        // const achievementsResponse = await axios.get(
-        //   `/api/habits/${id}/achievements`
-        // );
+        // 習慣の達成記録を取得
+        const achievementsResponse = await axios.get(
+          `${API_URL}/${id}/achievements`
+        );
 
-        // // APIレスポンスを適切な形式（Record<string, boolean>）に変換
-        // const achievementsData = achievementsResponse.data.reduce(
-        //   (acc: Record<string, boolean>, item: any) => {
-        //     acc[item.date] = item.achieved;
-        //     return acc;
-        //   },
-        //   {}
-        // );
+        // APIレスポンスを適切な形式に変換
+        const achievementsData = achievementsResponse.data.reduce(
+          (acc: Record<string, boolean>, item: any) => {
+            acc[item.achievementDate] = item.achieved;
+            return acc;
+          },
+          {}
+        );
 
-        // // 今日の日付が含まれていない場合は追加
-        // const today = new Date().toISOString().split("T")[0];
-        // if (achievementsData[today] === undefined) {
-        //   achievementsData[today] = false;
-        // }
+        // 今日の日付が含まれていない場合は追加
+        if (achievementsData[today] === undefined) {
+          achievementsData[today] = false;
+        }
 
-        // setAchievements(achievementsData);
+        setAchievements(achievementsData);
         setLoading(false);
       } catch (err) {
         console.error("データの取得中にエラーが発生しました:", err);
@@ -58,38 +61,43 @@ export function HabitDetail() {
       }
     };
 
-    if (id) {
-      fetchHabitDetails();
-    }
+    fetchHabitDetails();
   }, [id]);
 
-  const handleToggleAchievement = async (date: string) => {
+  // 今日の達成状態を切り替える
+  const handleTodayAchievement = async () => {
+    if (!id) return;
+
     try {
-      const newStatus = !achievements[date];
+      // 現在と反対の状態を設定
+      const newStatus = !isAchievedToday;
 
       // バックエンドに達成状況の更新を送信
-      await axios.post(`/api/habits/${id}/achievements`, {
-        date: date,
+      await axios.post(`${API_URL}/${id}/achievements`, {
+        habitId: id,
+        achievementDate: today,
         achieved: newStatus,
       });
 
       // 成功したら、ローカルの状態を更新
-      setAchievements((prev) => ({
-        ...prev,
-        [date]: newStatus,
-      }));
+      setAchievements({
+        ...achievements,
+        [today]: newStatus,
+      });
     } catch (err) {
       console.error("達成状況の更新中にエラーが発生しました:", err);
       alert("達成状況の更新に失敗しました。");
     }
   };
 
+  // 達成進捗率を計算
   const calculateProgress = () => {
     if (!habit) return 0;
     const achievedDays = Object.values(achievements).filter((v) => v).length;
     return Math.min(Math.round((achievedDays / TARGET_DAYS) * 100), 100);
   };
 
+  // ローディング中の表示
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center py-12">
@@ -98,6 +106,7 @@ export function HabitDetail() {
     );
   }
 
+  // エラーまたは習慣が見つからない場合の表示
   if (error || !habit) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -120,8 +129,10 @@ export function HabitDetail() {
     );
   }
 
+  // 習慣詳細の表示
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* ヘッダー部分 */}
       <div className="flex justify-between items-center mb-8">
         <button
           onClick={() => navigate("/")}
@@ -133,8 +144,10 @@ export function HabitDetail() {
           />
           <span>戻る</span>
         </button>
+
+        {/* 達成ボタン */}
         <button
-          onClick={() => handleToggleAchievement(today)}
+          onClick={handleTodayAchievement}
           className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors duration-300
             ${
               isAchievedToday
@@ -147,7 +160,9 @@ export function HabitDetail() {
         </button>
       </div>
 
+      {/* メインコンテンツ */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* 習慣タイトルと基本情報 */}
         <div className="bg-blue-600 p-8 text-white">
           <h1 className="text-3xl font-bold mb-4">{habit.title}</h1>
           <div className="flex items-center gap-6 text-blue-100">
@@ -164,7 +179,9 @@ export function HabitDetail() {
           </div>
         </div>
 
+        {/* 習慣の詳細情報 */}
         <div className="p-8">
+          {/* 詳細説明 */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">詳細</h2>
             <p className="text-gray-600 leading-relaxed">
@@ -172,18 +189,20 @@ export function HabitDetail() {
             </p>
           </div>
 
+          {/* 進捗バー */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">進捗状況</h2>
             <ProgressBar percentage={calculateProgress()} />
           </div>
 
+          {/* カレンダー */}
           <div>
             <h2 className="text-xl font-semibold mb-4">記録カレンダー</h2>
             <HabitCalendar
               habitId={habit.id}
               achievements={achievements}
-              onToggleAchievement={handleToggleAchievement}
               startDate={new Date(habit.createdAt)}
+              todayStatus={isAchievedToday}
             />
           </div>
         </div>

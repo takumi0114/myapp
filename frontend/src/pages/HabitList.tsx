@@ -19,6 +19,7 @@ export function HabitList() {
   const totalPages = Math.ceil(habits.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
+
   const currentHabits = habits.slice(startIndex, endIndex);
   const API_URL = "http://localhost:8080/api/habits";
 
@@ -30,7 +31,10 @@ export function HabitList() {
     try {
       const response = await axios.get<Habit[]>(API_URL);
 
-      setHabits(response.data);
+      // 配列を反転させて、最後の要素を最初に表示する
+      const reversedHabits = [...response.data].reverse();
+
+      setHabits(reversedHabits);
     } catch (error) {
       console.error("習慣の取得中にエラーが発生しました:", error);
       alert("習慣の取得中にエラーが発生しました");
@@ -58,7 +62,7 @@ export function HabitList() {
 
       // ローカルの状態を更新
       // データベースに値は入っているが、リロード後表示されない問題がある
-      setHabits((prev) => [...prev, newHabit]);
+      setHabits((prev) => [newHabit, ...prev]);
     } catch (error) {
       console.error("習慣の保存中にエラーが発生しました:", error);
       alert("習慣の保存中にエラーが発生しました");
@@ -112,6 +116,17 @@ export function HabitList() {
       alert("習慣の削除中にエラーが発生しました");
     }
   };
+
+  // Move habits to localStorage to persist data between page navigations
+  // const getStoredHabits = (): Habit[] => {
+  //   const stored = localStorage.getItem("habits");
+  //   const habits = stored ? JSON.parse(stored) : [];
+  //   // 新しい習慣を先頭に表示するためにソート
+  //   return habits.sort(
+  //     (a: Habit, b: Habit) =>
+  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //   );
+  // };
 
   const openModal = (habit?: Habit) => {
     setEditingHabit(habit);

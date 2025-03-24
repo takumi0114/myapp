@@ -1,6 +1,7 @@
 package routes
 
 import models.HabitDTO
+import models.HabitAchievementDTO
 import services.HabitService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -84,6 +85,54 @@ fun Route.habitRoutes() {
                 }
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.BadRequest, "Invalid UUID format")
+            }
+        }
+
+        // 達成記録を取得
+        get("/{id}/achievements") {
+            val id = call.parameters["id"] 
+                ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "無効なID"))
+            
+            try {
+                val achievements = habitService.getHabitAchievements(id)
+                call.respond(achievements)
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "無効なUUID形式"))
+            } catch (e: Exception) {
+                call.application.log.error("達成記録の取得中にエラーが発生しました", e)
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "達成記録の取得中にエラーが発生しました"))
+            }
+        }
+
+        // 習慣のルートに追加（route("/api/habits") の中）
+        // 達成状況を更新
+        post("/{id}/achievements") {
+            val id = call.parameters["id"]
+                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "無効なID"))
+            
+            try {
+                val date = call.receive<HabitAchievementDTO>()
+                
+                // リクエストのhabitIdとパスパラメータのidが一致することを確認
+                if (date.habitId != id) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "habitIdが一致しません"))
+                    return@post
+                }
+                
+                val updatedAchievement = habitService.updateHabitAchievement(
+                    id,
+                    date.achievementDate,
+                    date.achieved
+                )
+                
+                call.respond(updatedAchievement)
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "無効なデータ形式"))
+            } catch (e: ContentTransformationException) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "無効なリクエスト形式"))
+            } catch (e: Exception) {
+                call.application.log.error("達成状況の更新中にエラーが発生しました", e)
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "達成状況の更新中にエラーが発生しました"))
             }
         }
     }
