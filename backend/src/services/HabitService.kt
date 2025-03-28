@@ -8,6 +8,8 @@ import java.time.LocalDateTime
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+// javaの標準ライブラリの標準ライブラリ
+import java.io.File
 
 class HabitService {
     
@@ -63,12 +65,51 @@ class HabitService {
         
         updatedRows > 0
     }
-    
-    // 習慣を削除
+
+    // 習慣と関連する全ての詳細記録を削除
     fun deleteHabit(id: String): Boolean = transaction {
         val uuid = UUID.fromString(id)
+        
+        // まず関連する詳細記録を削除
+        HabitDetails.deleteWhere { HabitDetails.habitId eq uuid }
+        
+        // 関連する達成記録も削除（もし存在する場合）
+        HabitAchievements.deleteWhere { HabitAchievements.habitId eq uuid }
+        
+        // 最後に習慣自体を削除
         val deletedRows = Habits.deleteWhere { Habits.id eq uuid }
         
+        // 削除された行数が0より大きければ成功
+        deletedRows > 0
+    }
+
+    // 特定の習慣の特定日の詳細記録を削除
+    fun deleteHabitDetail(habitId: String, date: String): Boolean = transaction {
+        val uuid = UUID.fromString(habitId)
+        val localDate = LocalDate.parse(date)
+
+        // まず詳細を取得して、画像パスがあれば削除
+        val detail = HabitDetails
+            .select { (HabitDetails.habitId eq uuid) and (HabitDetails.achievementDate eq localDate) }
+            .singleOrNull()
+        
+        if (detail != null) {
+            val photoPath = detail[HabitDetails.photo]
+            if (photoPath != null) {
+                // 画像ファイルを削除
+                val file = File(photoPath)
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+        }
+        
+        // 指定された習慣と日付の詳細記録を削除
+        val deletedRows = HabitDetails.deleteWhere { 
+            (HabitDetails.habitId eq uuid) and (HabitDetails.achievementDate eq localDate)
+        }
+        
+        // 削除された行数が0より大きければ成功
         deletedRows > 0
     }
 
@@ -127,5 +168,52 @@ class HabitService {
                 achieved = achieved
             )
         }
+    }
+
+
+    fun createHabitDetail(habitDetail: HabitDetailDTO): HabitDetailDTO = transaction {
+        
+        // 新しいレコードを作成
+        val detailId = UUID.randomUUID()
+        val uuid = UUID.fromString(habitDetail.habitId)
+        val detailDate = LocalDate.parse(habitDetail.achievementDate)
+        
+        try {
+            HabitDetails.insert {
+                it[id] = detailId
+                it[habitId] = uuid
+                it[achievementDate] = detailDate
+                it[notes] = habitDetail.notes
+                it[duration] = habitDetail.duration
+                it[photo] = habitDetail.photo
+            }
+            
+            println("詳細記録の保存に成功しました")
+            
+            habitDetail.copy(id = detailId.toString())
+        } catch (e: Exception) {
+            println("詳細記録の保存中にエラーが発生しました: ${e.message}")
+            e.printStackTrace()
+            // エラーが発生した場合も何かを返す必要がある
+            throw e  // 例外を再スローして上位で処理できるようにする
+        }
+    }
+
+    // 習慣の全詳細を取得
+    fun getHabitDetails(habitId: String): List<HabitDetailDTO> = transaction {
+        val uuid = UUID.fromString(habitId)
+        
+        HabitDetails
+            .select { HabitDetails.habitId eq uuid }
+            .map { row ->
+                HabitDetailDTO(
+                    id = row[HabitDetails.id].value.toString(),
+                    habitId = habitId,
+                    achievementDate = row[HabitDetails.achievementDate].toString(),
+                    notes = row[HabitDetails.notes],
+                    duration = row[HabitDetails.duration],
+                    photo = row[HabitDetails.photo]
+                )
+            }
     }
 }

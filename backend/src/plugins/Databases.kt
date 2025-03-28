@@ -1,7 +1,6 @@
 package plugins
 
-import models.Habits  // モデルをインポート
-import models.HabitAchievements
+import models.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -16,5 +15,7 @@ fun Application.configureDatabases() {
     transaction(database) {
         SchemaUtils.create(Habits)  // インポートしたモデルのテーブルを作成
         SchemaUtils.create(HabitAchievements)
+        // ここが存在していなかったのでテーブル作成できなかった、その後に再起動
+        SchemaUtils.create(HabitDetails)
     }
 }

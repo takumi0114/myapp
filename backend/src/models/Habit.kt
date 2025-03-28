@@ -13,7 +13,7 @@ object Habits : UUIDTable() {
     val createdAt = datetime("created_at").default(LocalDateTime.now())
 }
 
-// APIレスポンス用のデータモデル
+// APIレスポンス用のデータモデル DTO(データ転送オブジェクト)
 @Serializable
 data class HabitDTO(
     val id: String? = null,

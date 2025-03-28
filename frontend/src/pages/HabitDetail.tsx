@@ -3,8 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, CheckCircle } from "lucide-react";
 import { ProgressBar } from "../components/ProgressBar";
 import { HabitCalendar } from "../components/HabitCalendar";
+import { DetailModal } from "../components/DetailModal";
 import axios from "axios";
 import type { Habit } from "../types";
+import { AchievementModal } from "../components/AchievementModal";
 
 const TARGET_DAYS = 66;
 const API_URL = "http://localhost:8080/api/habits";
@@ -14,55 +16,87 @@ export function HabitDetail() {
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit | undefined>();
   const [achievements, setAchievements] = useState<Record<string, boolean>>({});
+  const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [habitDetails, setHabitDetails] = useState<Record<string, any>>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // 今日の日付を取得
   const today = new Date().toISOString().split("T")[0];
   const isAchievedToday = achievements[today] === true;
 
-  // 習慣の詳細と達成記録を取得
-  useEffect(() => {
-    const fetchHabitDetails = async () => {
-      if (!id) return;
+  const fetchHabitDetail = async () => {
+    if (!id) return;
 
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        // 習慣の詳細を取得
-        const habitResponse = await axios.get(`${API_URL}/${id}`);
-        setHabit(habitResponse.data);
+      // 習慣の詳細を取得
+      const habitResponse = await axios.get(`${API_URL}/${id}`);
+      setHabit(habitResponse.data);
 
-        // 習慣の達成記録を取得
-        const achievementsResponse = await axios.get(
-          `${API_URL}/${id}/achievements`
-        );
+      // 習慣の達成記録を取得
+      const achievementsResponse = await axios.get(
+        `${API_URL}/${id}/achievements`
+      );
 
-        // APIレスポンスを適切な形式に変換
-        const achievementsData = achievementsResponse.data.reduce(
-          (acc: Record<string, boolean>, item: any) => {
-            acc[item.achievementDate] = item.achieved;
-            return acc;
-          },
-          {}
-        );
+      // APIレスポンスを適切な形式に変換
+      const achievementsData = achievementsResponse.data.reduce(
+        (acc: Record<string, boolean>, item: any) => {
+          acc[item.achievementDate] = item.achieved;
+          return acc;
+        },
+        {}
+      );
 
-        // 今日の日付が含まれていない場合は追加
-        if (achievementsData[today] === undefined) {
-          achievementsData[today] = false;
-        }
-
-        setAchievements(achievementsData);
-        setLoading(false);
-      } catch (err) {
-        console.error("データの取得中にエラーが発生しました:", err);
-        setError("習慣データの取得に失敗しました。");
-        setLoading(false);
+      // 今日の日付が含まれていない場合は追加
+      if (achievementsData[today] === undefined) {
+        achievementsData[today] = false;
       }
-    };
 
+      setAchievements(achievementsData);
+      setLoading(false);
+    } catch (err) {
+      console.error("データの取得中にエラーが発生しました:", err);
+      setError("習慣データの取得に失敗しました。");
+      setLoading(false);
+    }
+  };
+
+  // 詳細データを取得する関数
+  const fetchHabitDetails = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/${id}/details`);
+
+      // 日付をキーとするオブジェクトに変換
+      const detailsMap = response.data.reduce(
+        (acc: Record<string, any>, detail: any) => {
+          acc[detail.date] = detail;
+          return acc;
+        },
+        {}
+      );
+
+      setHabitDetails(detailsMap);
+    } catch (error) {
+      console.error("詳細の取得中にエラーが発生しました:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHabitDetail();
     fetchHabitDetails();
   }, [id]);
+
+  // useEffect(() => {
+  //   console.log("セレクトデータ", selectedDate);
+  // }, [selectedDate]);
+
+  // useEffect(() => {
+  //   console.log("ハビット出ている", habitDetails);
+  // }, [habitDetails]);
 
   // 今日の達成状態を切り替える
   const handleTodayAchievement = async () => {
@@ -84,10 +118,33 @@ export function HabitDetail() {
         ...achievements,
         [today]: newStatus,
       });
+      if (isAchievedToday === false) {
+        setIsAchievementModalOpen(true);
+      } else {
+        if (
+          window.confirm(
+            "未達成に変更すると、この日の詳細記録が削除されます。よろしいですか？"
+          )
+        ) {
+          try {
+            // 詳細記録を削除
+            await axios.delete(`${API_URL}/${id}/details/${today}`);
+
+            // UIの更新など
+          } catch (error) {
+            console.error("詳細の削除中にエラーが発生しました:", error);
+          }
+        }
+      }
     } catch (err) {
       console.error("達成状況の更新中にエラーが発生しました:", err);
       alert("達成状況の更新に失敗しました。");
     }
+  };
+
+  const handleClickDate = (date: string) => {
+    setSelectedDate(date);
+    setIsDetailModalOpen(true);
   };
 
   // 達成進捗率を計算
@@ -203,10 +260,25 @@ export function HabitDetail() {
               achievements={achievements}
               startDate={new Date(habit.createdAt)}
               todayStatus={isAchievedToday}
+              habitDetails={habitDetails}
+              onClickDate={handleClickDate}
             />
           </div>
+
+          <DetailModal
+            isOpen={isDetailModalOpen}
+            onClose={() => setIsDetailModalOpen(false)}
+            detail={selectedDate ? habitDetails[selectedDate] : null}
+            date={selectedDate || ""}
+          />
         </div>
       </div>
+
+      <AchievementModal
+        isOpen={isAchievementModalOpen}
+        onClose={() => setIsAchievementModalOpen(false)}
+        // onSave={handleSaveAchievement}
+      />
     </div>
   );
 }
