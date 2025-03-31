@@ -32,18 +32,18 @@ export function DetailModal({
           <div>
             {detail.notes && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">メモ</h3>
-                <p className="text-gray-800">{detail.notes}</p>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">メモ</h3>
+                <p className="ml-2 text-gray-800">{detail.notes}</p>
               </div>
             )}
 
             {detail.duration && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">
                   所要時間
                 </h3>
-                <div className="flex items-center text-gray-800">
-                  <Clock size={16} className="mr-1" />
+                <div className="ml-2 flex items-center text-gray-800">
+                  <Clock size={16} className="mr-2" />
                   <span>{detail.duration}分</span>
                 </div>
               </div>
@@ -51,11 +51,11 @@ export function DetailModal({
 
             {detail.photo && (
               <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">画像</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">画像</h3>
                 <img
-                  src={detail.photo}
+                  src={`http://localhost:8080/${detail.photo}`}
                   alt="記録画像"
-                  className="mt-1 rounded-lg max-h-64 max-w-full object-contain"
+                  className="ml-2 rounded-lg max-h-64 max-w-full object-contain"
                 />
               </div>
             )}

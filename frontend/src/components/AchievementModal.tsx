@@ -1,15 +1,10 @@
 import React, { useState, useRef } from "react";
 import { X } from "lucide-react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { AchievementModalProps } from "../types";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-export function AchievementModal({
-  isOpen,
-  onClose,
-}: // onSave,
-AchievementModalProps) {
+export function AchievementModal({ isOpen, onClose }: AchievementModalProps) {
   const { id } = useParams();
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<File | undefined>();

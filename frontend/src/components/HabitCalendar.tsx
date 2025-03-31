@@ -166,7 +166,8 @@ export function HabitCalendar({
               <div
                 key={dateStr}
                 className={`h-8 flex items-center justify-center relative
-                  ${isToday ? "font-bold" : ""}`}
+                  ${isToday ? "font-bold" : ""}
+                  ${habitDetails[dateStr] && "cursor-pointer"}`}
                 onClick={() => onClickDate(dateStr)}
               >
                 {/* 日付の数字 */}
@@ -185,9 +186,8 @@ export function HabitCalendar({
                   />
                 )}
 
-                {/* ここで色変えようかなと思っている */}
                 {habitDetails[dateStr] && (
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full cursor-pointer" />
+                  <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full" />
                 )}
               </div>
             );

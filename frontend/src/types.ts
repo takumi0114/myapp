@@ -15,5 +15,4 @@ export interface ModalProps {
 export interface AchievementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // onSave?: (achievement: Achievement) => void;
 }

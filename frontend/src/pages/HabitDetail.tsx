@@ -73,11 +73,13 @@ export function HabitDetail() {
       // 日付をキーとするオブジェクトに変換
       const detailsMap = response.data.reduce(
         (acc: Record<string, any>, detail: any) => {
-          acc[detail.date] = detail;
+          acc[detail.achievementDate] = detail;
           return acc;
         },
         {}
       );
+
+      // console.log(detailsMap);
 
       setHabitDetails(detailsMap);
     } catch (error) {
@@ -89,14 +91,6 @@ export function HabitDetail() {
     fetchHabitDetail();
     fetchHabitDetails();
   }, [id]);
-
-  // useEffect(() => {
-  //   console.log("セレクトデータ", selectedDate);
-  // }, [selectedDate]);
-
-  // useEffect(() => {
-  //   console.log("ハビット出ている", habitDetails);
-  // }, [habitDetails]);
 
   // 今日の達成状態を切り替える
   const handleTodayAchievement = async () => {
@@ -129,6 +123,8 @@ export function HabitDetail() {
           try {
             // 詳細記録を削除
             await axios.delete(`${API_URL}/${id}/details/${today}`);
+            setSelectedDate(null);
+            setHabitDetails({});
 
             // UIの更新など
           } catch (error) {
@@ -190,7 +186,7 @@ export function HabitDetail() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* ヘッダー部分 */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between mb-8">
         <button
           onClick={() => navigate("/")}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 group"
@@ -277,7 +273,6 @@ export function HabitDetail() {
       <AchievementModal
         isOpen={isAchievementModalOpen}
         onClose={() => setIsAchievementModalOpen(false)}
-        // onSave={handleSaveAchievement}
       />
     </div>
   );
