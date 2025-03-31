@@ -11,3 +11,8 @@ export interface ModalProps {
   habit?: Habit;
   onSave: (habit: Omit<Habit, "id" | "createdAt">) => void;
 }
+
+export interface AchievementModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}

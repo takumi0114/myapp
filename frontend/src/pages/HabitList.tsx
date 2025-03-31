@@ -117,17 +117,6 @@ export function HabitList() {
     }
   };
 
-  // Move habits to localStorage to persist data between page navigations
-  // const getStoredHabits = (): Habit[] => {
-  //   const stored = localStorage.getItem("habits");
-  //   const habits = stored ? JSON.parse(stored) : [];
-  //   // 新しい習慣を先頭に表示するためにソート
-  //   return habits.sort(
-  //     (a: Habit, b: Habit) =>
-  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  //   );
-  // };
-
   const openModal = (habit?: Habit) => {
     setEditingHabit(habit);
     setIsModalOpen(true);

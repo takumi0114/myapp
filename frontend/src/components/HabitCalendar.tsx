@@ -7,6 +7,8 @@ interface HabitCalendarProps {
   achievements: Record<string, boolean>;
   startDate: Date;
   todayStatus: boolean; // 今日の達成状態を親から受け取る
+  habitDetails: Record<string, any>;
+  onClickDate: (date: string) => void;
 }
 
 // 月の日本語名
@@ -62,6 +64,8 @@ export function HabitCalendar({
   achievements,
   startDate,
   todayStatus,
+  habitDetails,
+  onClickDate,
 }: HabitCalendarProps) {
   // 実際の今日の日付（固定）
   const realToday = new Date();
@@ -91,8 +95,12 @@ export function HabitCalendar({
   );
 
   // 日付を文字列形式に変換（YYYY-MM-DD）
+  // タイムゾーンを考慮した日付文字列の生成
   const getDateString = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   // 月のカレンダーをレンダリング
@@ -158,7 +166,9 @@ export function HabitCalendar({
               <div
                 key={dateStr}
                 className={`h-8 flex items-center justify-center relative
-                  ${isToday ? "font-bold" : ""}`}
+                  ${isToday ? "font-bold" : ""}
+                  ${habitDetails[dateStr] && "cursor-pointer"}`}
+                onClick={() => onClickDate(dateStr)}
               >
                 {/* 日付の数字 */}
                 <span
@@ -174,6 +184,10 @@ export function HabitCalendar({
                       ${isAchieved ? "bg-green-500" : "bg-red-500"} 
                       ${isToday ? "opacity-60" : "opacity-20"}`}
                   />
+                )}
+
+                {habitDetails[dateStr] && (
+                  <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full" />
                 )}
               </div>
             );
